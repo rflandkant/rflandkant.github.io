@@ -12,7 +12,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:like_button/like_button.dart';
-import 'main.dart';
+import 'halaman_home.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 void main() async {
