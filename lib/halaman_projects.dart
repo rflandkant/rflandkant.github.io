@@ -8,46 +8,15 @@ import 'package:footer/footer.dart';
 import 'package:button_animations/button_animations.dart';
 import 'package:rifal_anandika/halaman_about.dart';
 import 'package:rifal_anandika/halaman_skills.dart';
+import 'package:rifal_anandika/main.dart';
+import 'package:rifal_anandika/show_design.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:like_button/like_button.dart';
 import 'halaman_home.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  final savedThemeMode = await AdaptiveTheme.getThemeMode();
-  runApp(MyWidget(savedThemeMode: savedThemeMode));
-}
-
-class MyWidget extends StatelessWidget {
-  final AdaptiveThemeMode? savedThemeMode;
-
-  const MyWidget({super.key, this.savedThemeMode});
-  @override
-  Widget build(BuildContext context) {
-    return AdaptiveTheme(
-      debugShowFloatingThemeButton: false,
-      light: ThemeData(
-        useMaterial3: true,
-        brightness: Brightness.light,
-      ),
-      dark: ThemeData(
-        useMaterial3: true,
-        brightness: Brightness.dark,
-      ),
-      initial: savedThemeMode ?? AdaptiveThemeMode.light,
-      builder: (theme, darkTheme) => MaterialApp(
-        debugShowCheckedModeBanner: false,
-        title: 'rflandkant',
-        theme: theme,
-        darkTheme: darkTheme,
-        home: const ProjectsPage(),
-      ),
-    );
-  }
-}
+import 'package:provider/provider.dart';
 
 class ProjectsPage extends StatefulWidget {
   const ProjectsPage({super.key});
@@ -97,26 +66,73 @@ class _ProjectsPageState extends State<ProjectsPage> {
               margin: EdgeInsets.only(right: 15),
               child: Row(
                 children: [
-                  LikeButton(
-                    countPostion: CountPostion.bottom,
-                    circleColor:
-                        CircleColor(start: Colors.red, end: Colors.red),
-                    bubblesColor: BubblesColor(
-                      dotPrimaryColor: Colors.red,
-                      dotSecondaryColor: Colors.red,
-                    ),
-                    likeBuilder: (bool isLiked) {
-                      return Icon(
-                        Icons.favorite_rounded,
-                        color: isLiked ? Colors.pink : Colors.grey,
-                        size: 30,
-                      );
-                    },
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Consumer<LikeModel>(
+                        builder: (context, likeModel, _) {
+                          return LikeButton(
+                            size: 30,
+                            countPostion: CountPostion.right,
+                            bubblesColor: BubblesColor(
+                              dotPrimaryColor: likeModel.isLiked
+                                  ? Colors.redAccent
+                                  : Theme.of(context).brightness ==
+                                          Brightness.light
+                                      ? const Color.fromARGB(0, 255, 255, 255)
+                                      : Colors.transparent,
+                              dotSecondaryColor: likeModel.isLiked
+                                  ? Colors.redAccent
+                                  : Theme.of(context).brightness ==
+                                          Brightness.light
+                                      ? const Color.fromARGB(0, 255, 255, 255)
+                                      : Colors.transparent,
+                            ),
+                            circleColor: CircleColor(
+                              start: likeModel.isLiked
+                                  ? Colors.redAccent
+                                  : const Color.fromARGB(0, 255, 255, 255),
+                              end: likeModel.isLiked
+                                  ? Colors.redAccent
+                                  : const Color.fromARGB(0, 255, 255, 255),
+                            ),
+                            likeBuilder: (bool isLiked) {
+                              return Icon(
+                                Icons.favorite_rounded,
+                                color: likeModel.isLiked
+                                    ? Colors.redAccent
+                                    : Colors.grey,
+                                size: 30,
+                              );
+                            },
+                            onTap: (isLiked) async {
+                              Provider.of<LikeModel>(context, listen: false)
+                                  .incrementLike();
+                              return !isLiked;
+                            },
+                          );
+                        },
+                      ),
+                      SizedBox(height: 1.5),
+                      // Indikator Jumlah Like
+                      Consumer<LikeModel>(
+                        builder: (context, likeModel, _) {
+                          return Text(
+                            '${likeModel.likeCount}',
+                            style: GoogleFonts.arima(fontSize: 12),
+                          );
+                        },
+                      ),
+                    ],
                   ),
                   SizedBox(
-                    width: 3,
+                    width: 10,
                   ),
                   Switch(
+                    thumbIcon: WidgetStatePropertyAll(Icon(
+                        Theme.of(context).brightness == Brightness.light
+                            ? Icons.brightness_7
+                            : Icons.brightness_4)),
                     value: AdaptiveTheme.of(context).mode.isDark,
                     onChanged: (value) {
                       if (value) {
@@ -160,7 +176,8 @@ class _ProjectsPageState extends State<ProjectsPage> {
                           ),
                         ],
                         image: DecorationImage(
-                          image: AssetImage('assets/background_drawer.jpg'),
+                          image:
+                              AssetImage('assets/drawer/background_drawer.jpg'),
                           fit: BoxFit.cover,
                           colorFilter: ColorFilter.mode(
                               Color.fromARGB(153, 0, 0, 0), BlendMode.darken),
@@ -178,7 +195,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
                                     width: 0.5),
                                 image: DecorationImage(
                                   image: AssetImage(
-                                    'assets/profil.png',
+                                    'assets/drawer/profil.png',
                                   ),
                                   fit: BoxFit.cover,
                                 ),
@@ -211,6 +228,10 @@ class _ProjectsPageState extends State<ProjectsPage> {
                                     animatedTexts: [
                                       TypewriterAnimatedText(
                                         'Frontend Developer',
+                                        speed: Duration(milliseconds: 150),
+                                      ),
+                                      TypewriterAnimatedText(
+                                        'Mobile Developer',
                                         speed: Duration(milliseconds: 150),
                                       ),
                                       TypewriterAnimatedText(
@@ -494,22 +515,21 @@ class _ProjectsPageState extends State<ProjectsPage> {
                       spacing: 75,
                       runSpacing: 75,
                       alignment: WrapAlignment.center,
+                      runAlignment: WrapAlignment.center,
                       children: <Widget>[
                         Container(
                           width: 500,
                           child: Column(
                             children: <Widget>[
                               FittedBox(
-                                child: Container(
-                                  width: 500,
-                                  height: 352,
-                                  decoration: BoxDecoration(
-                                    image: DecorationImage(
-                                      alignment: Alignment.topCenter,
-                                      fit: BoxFit.contain,
-                                      image: AssetImage(
-                                          'assets/content1_projects.png'),
-                                    ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.only(
+                                      topLeft: Radius.circular(20),
+                                      topRight: Radius.circular(20)),
+                                  child: Image.asset(
+                                    'assets/content_projects/content1_projects.png',
+                                    width: 500,
+                                    height: 352,
                                   ),
                                 ),
                               ),
@@ -547,7 +567,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
                                           ),
                                         ),
                                         Text(
-                                          'This is a 7 day challenge project to create a UI, this is one of the projects from my school. Created on 10/05/2023.',
+                                          'This is a 7 day challenge project to create a UI, this is one of the projects from my school. I made it with the dart programming language and the flutter framework. Created on 10/05/2023.',
                                           style: GoogleFonts.arima(
                                             fontSize: 10,
                                             color:
@@ -606,7 +626,10 @@ class _ProjectsPageState extends State<ProjectsPage> {
                                                       ),
                                                     ],
                                                   ),
-                                                  onTap: () {},
+                                                  onTap: () {
+                                                    launch(
+                                                        'https://github.com/rflandkant/7-Day-UI-Project');
+                                                  },
                                                   type: null,
                                                   isOutline: true,
                                                   borderColor: Colors.black,
@@ -620,93 +643,50 @@ class _ProjectsPageState extends State<ProjectsPage> {
                                                       255, 60, 60, 60),
                                                 ),
                                               ),
-                                              Container(
-                                                height: 30,
-                                                width: 130,
-                                                child: AnimatedButton(
-                                                  duration: 1,
-                                                  child: Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .center,
-                                                    children: [
-                                                      Icon(
-                                                        Icons
-                                                            .open_in_browser_rounded,
-                                                        size: 17,
-                                                        color: Colors.white,
-                                                      ),
-                                                      SizedBox(
-                                                        width: 5,
-                                                      ),
-                                                      Text(
-                                                        'Demo App',
-                                                        style:
-                                                            GoogleFonts.arima(
-                                                          fontSize: 12,
-                                                          color: Colors.white,
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  onTap: () {},
-                                                  type: null,
-                                                  isOutline: true,
-                                                  borderColor: Color.fromARGB(
-                                                      255, 0, 68, 5),
-                                                  borderWidth: 1,
-                                                  height: 30,
-                                                  width: 130,
-                                                  borderRadius: 22.5,
-                                                  color: Color.fromARGB(
-                                                      255, 9, 177, 17),
-                                                  shadowColor: Color.fromARGB(
-                                                      255, 0, 115, 5),
-                                                ),
-                                              ),
-                                              Container(
-                                                height: 30,
-                                                width: 130,
-                                                child: AnimatedButton(
-                                                  duration: 1,
-                                                  child: Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .center,
-                                                    children: [
-                                                      Icon(
-                                                        Icons.share_rounded,
-                                                        size: 17,
-                                                        color: Colors.white,
-                                                      ),
-                                                      SizedBox(
-                                                        width: 5,
-                                                      ),
-                                                      Text(
-                                                        'Share Link',
-                                                        style:
-                                                            GoogleFonts.arima(
-                                                          fontSize: 12,
-                                                          color: Colors.white,
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  onTap: () {},
-                                                  type: null,
-                                                  isOutline: true,
-                                                  borderColor:
-                                                      const Color.fromARGB(
-                                                          255, 0, 51, 75),
-                                                  borderWidth: 1,
-                                                  height: 30,
-                                                  width: 130,
-                                                  borderRadius: 22.5,
-                                                  color: Colors.lightBlue,
-                                                  shadowColor: Color.fromARGB(
-                                                      255, 0, 99, 145),
-                                                ),
-                                              ),
+                                              // Container(
+                                              //   height: 30,
+                                              //   width: 130,
+                                              //   child: AnimatedButton(
+                                              //     duration: 1,
+                                              //     child: Row(
+                                              //       mainAxisAlignment:
+                                              //           MainAxisAlignment
+                                              //               .center,
+                                              //       children: [
+                                              //         Icon(
+                                              //           Icons
+                                              //               .open_in_browser_rounded,
+                                              //           size: 17,
+                                              //           color: Colors.white,
+                                              //         ),
+                                              //         SizedBox(
+                                              //           width: 5,
+                                              //         ),
+                                              //         Text(
+                                              //           'Demo Project',
+                                              //           style:
+                                              //               GoogleFonts.arima(
+                                              //             fontSize: 12,
+                                              //             color: Colors.white,
+                                              //           ),
+                                              //         ),
+                                              //       ],
+                                              //     ),
+                                              //     onTap: () {},
+                                              //     type: null,
+                                              //     isOutline: true,
+                                              //     borderColor: Color.fromARGB(
+                                              //         255, 0, 68, 5),
+                                              //     borderWidth: 1,
+                                              //     height: 30,
+                                              //     width: 130,
+                                              //     borderRadius: 22.5,
+                                              //     color: Color.fromARGB(
+                                              //         255, 9, 177, 17),
+                                              //     shadowColor: Color.fromARGB(
+                                              //         255, 0, 115, 5),
+                                              //   ),
+                                              // ),
                                             ],
                                           ),
                                         ),
@@ -723,16 +703,14 @@ class _ProjectsPageState extends State<ProjectsPage> {
                           child: Column(
                             children: <Widget>[
                               FittedBox(
-                                child: Container(
-                                  width: 500,
-                                  height: 352,
-                                  decoration: BoxDecoration(
-                                    image: DecorationImage(
-                                      alignment: Alignment.topCenter,
-                                      fit: BoxFit.contain,
-                                      image: AssetImage(
-                                          'assets/content2_projects.png'),
-                                    ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.only(
+                                      topLeft: Radius.circular(20),
+                                      topRight: Radius.circular(20)),
+                                  child: Image.asset(
+                                    'assets/content_projects/content2_projects.png',
+                                    width: 500,
+                                    height: 352,
                                   ),
                                 ),
                               ),
@@ -770,7 +748,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
                                           ),
                                         ),
                                         Text(
-                                          'Digital attendance application to facilitate student and teacher attendance. Created on 16/05/2023.',
+                                          'Digital attendance application to facilitate student and teacher attendance. I made it with the dart programming language and the flutter framework. Created on 16/05/2023.',
                                           style: GoogleFonts.arima(
                                             fontSize: 10,
                                             color:
@@ -829,7 +807,10 @@ class _ProjectsPageState extends State<ProjectsPage> {
                                                       ),
                                                     ],
                                                   ),
-                                                  onTap: () {},
+                                                  onTap: () {
+                                                    launch(
+                                                        'https://github.com/rflandkant/School-Attendance');
+                                                  },
                                                   type: null,
                                                   isOutline: true,
                                                   borderColor: Colors.black,
@@ -843,93 +824,50 @@ class _ProjectsPageState extends State<ProjectsPage> {
                                                       255, 60, 60, 60),
                                                 ),
                                               ),
-                                              Container(
-                                                height: 30,
-                                                width: 130,
-                                                child: AnimatedButton(
-                                                  duration: 1,
-                                                  child: Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .center,
-                                                    children: [
-                                                      Icon(
-                                                        Icons
-                                                            .open_in_browser_rounded,
-                                                        size: 17,
-                                                        color: Colors.white,
-                                                      ),
-                                                      SizedBox(
-                                                        width: 5,
-                                                      ),
-                                                      Text(
-                                                        'Demo App',
-                                                        style:
-                                                            GoogleFonts.arima(
-                                                          fontSize: 12,
-                                                          color: Colors.white,
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  onTap: () {},
-                                                  type: null,
-                                                  isOutline: true,
-                                                  borderColor: Color.fromARGB(
-                                                      255, 0, 68, 5),
-                                                  borderWidth: 1,
-                                                  height: 30,
-                                                  width: 130,
-                                                  borderRadius: 22.5,
-                                                  color: Color.fromARGB(
-                                                      255, 9, 177, 17),
-                                                  shadowColor: Color.fromARGB(
-                                                      255, 0, 115, 5),
-                                                ),
-                                              ),
-                                              Container(
-                                                height: 30,
-                                                width: 130,
-                                                child: AnimatedButton(
-                                                  duration: 1,
-                                                  child: Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .center,
-                                                    children: [
-                                                      Icon(
-                                                        Icons.share_rounded,
-                                                        size: 17,
-                                                        color: Colors.white,
-                                                      ),
-                                                      SizedBox(
-                                                        width: 5,
-                                                      ),
-                                                      Text(
-                                                        'Share Link',
-                                                        style:
-                                                            GoogleFonts.arima(
-                                                          fontSize: 12,
-                                                          color: Colors.white,
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  onTap: () {},
-                                                  type: null,
-                                                  isOutline: true,
-                                                  borderColor:
-                                                      const Color.fromARGB(
-                                                          255, 0, 51, 75),
-                                                  borderWidth: 1,
-                                                  height: 30,
-                                                  width: 130,
-                                                  borderRadius: 22.5,
-                                                  color: Colors.lightBlue,
-                                                  shadowColor: Color.fromARGB(
-                                                      255, 0, 99, 145),
-                                                ),
-                                              ),
+                                              // Container(
+                                              //   height: 30,
+                                              //   width: 130,
+                                              //   child: AnimatedButton(
+                                              //     duration: 1,
+                                              //     child: Row(
+                                              //       mainAxisAlignment:
+                                              //           MainAxisAlignment
+                                              //               .center,
+                                              //       children: [
+                                              //         Icon(
+                                              //           Icons
+                                              //               .open_in_browser_rounded,
+                                              //           size: 17,
+                                              //           color: Colors.white,
+                                              //         ),
+                                              //         SizedBox(
+                                              //           width: 5,
+                                              //         ),
+                                              //         Text(
+                                              //           'Demo Project',
+                                              //           style:
+                                              //               GoogleFonts.arima(
+                                              //             fontSize: 12,
+                                              //             color: Colors.white,
+                                              //           ),
+                                              //         ),
+                                              //       ],
+                                              //     ),
+                                              //     onTap: () {},
+                                              //     type: null,
+                                              //     isOutline: true,
+                                              //     borderColor: Color.fromARGB(
+                                              //         255, 0, 68, 5),
+                                              //     borderWidth: 1,
+                                              //     height: 30,
+                                              //     width: 130,
+                                              //     borderRadius: 22.5,
+                                              //     color: Color.fromARGB(
+                                              //         255, 9, 177, 17),
+                                              //     shadowColor: Color.fromARGB(
+                                              //         255, 0, 115, 5),
+                                              //   ),
+                                              // ),
                                             ],
                                           ),
                                         ),
@@ -946,196 +884,14 @@ class _ProjectsPageState extends State<ProjectsPage> {
                           child: Column(
                             children: <Widget>[
                               FittedBox(
-                                child: Container(
-                                  width: 500,
-                                  height: 352,
-                                  decoration: BoxDecoration(
-                                    image: DecorationImage(
-                                      alignment: Alignment.topCenter,
-                                      fit: BoxFit.contain,
-                                      image: AssetImage(
-                                          'assets/content3_projects.png'),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              Container(
-                                padding: EdgeInsets.all(10),
-                                alignment: Alignment.topLeft,
-                                decoration: BoxDecoration(
-                                  border: Border(
-                                    left: BorderSide(
-                                      color: Color.fromARGB(255, 169, 157, 203),
-                                    ),
-                                    right: BorderSide(
-                                      color: Color.fromARGB(255, 169, 157, 203),
-                                    ),
-                                    bottom: BorderSide(
-                                      color: Color.fromARGB(255, 169, 157, 203),
-                                    ),
-                                  ),
+                                child: ClipRRect(
                                   borderRadius: BorderRadius.only(
-                                    bottomLeft: Radius.circular(20),
-                                    bottomRight: Radius.circular(20),
-                                  ),
-                                ),
-                                child: Column(
-                                  children: [
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'Booth Mockup Design',
-                                          style: GoogleFonts.arima(
-                                            fontSize: 25,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                        Text(
-                                          'Beautiful and attractive mockup design for promotional needs. Created on 02/11/2023.',
-                                          style: GoogleFonts.arima(
-                                            fontSize: 10,
-                                            color:
-                                                (Theme.of(context).brightness ==
-                                                        Brightness.light
-                                                    ? Color.fromARGB(
-                                                        225, 25, 25, 25)
-                                                    : Colors.white70),
-                                          ),
-                                          textScaleFactor:
-                                              ScaleSize.textScaleFactor(
-                                                  context),
-                                        ),
-                                      ],
-                                    ),
-                                    SizedBox(
-                                      height: 5,
-                                    ),
-                                    Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Padding(
-                                          padding:
-                                              const EdgeInsets.only(top: 10),
-                                          child: Wrap(
-                                            alignment: WrapAlignment.center,
-                                            spacing: 5,
-                                            runSpacing: 5,
-                                            children: <Widget>[
-                                              Container(
-                                                height: 30,
-                                                width: 130,
-                                                child: AnimatedButton(
-                                                  duration: 1,
-                                                  child: Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .center,
-                                                    children: [
-                                                      Icon(
-                                                        Icons.file_open_rounded,
-                                                        size: 17,
-                                                        color: Colors.white,
-                                                      ),
-                                                      SizedBox(
-                                                        width: 5,
-                                                      ),
-                                                      Text(
-                                                        'Show Design',
-                                                        style:
-                                                            GoogleFonts.arima(
-                                                          fontSize: 12,
-                                                          color: Colors.white,
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  onTap: () {},
-                                                  type: null,
-                                                  isOutline: true,
-                                                  borderColor: Color.fromARGB(
-                                                      255, 0, 68, 5),
-                                                  borderWidth: 1,
-                                                  height: 30,
-                                                  width: 130,
-                                                  borderRadius: 22.5,
-                                                  color: Color.fromARGB(
-                                                      255, 9, 177, 17),
-                                                  shadowColor: Color.fromARGB(
-                                                      255, 0, 115, 5),
-                                                ),
-                                              ),
-                                              Container(
-                                                height: 30,
-                                                width: 130,
-                                                child: AnimatedButton(
-                                                  duration: 1,
-                                                  child: Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .center,
-                                                    children: [
-                                                      Icon(
-                                                        Icons.share_rounded,
-                                                        size: 17,
-                                                        color: Colors.white,
-                                                      ),
-                                                      SizedBox(
-                                                        width: 5,
-                                                      ),
-                                                      Text(
-                                                        'Share Link',
-                                                        style:
-                                                            GoogleFonts.arima(
-                                                          fontSize: 12,
-                                                          color: Colors.white,
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  onTap: () {},
-                                                  type: null,
-                                                  isOutline: true,
-                                                  borderColor:
-                                                      const Color.fromARGB(
-                                                          255, 0, 51, 75),
-                                                  borderWidth: 1,
-                                                  height: 30,
-                                                  width: 130,
-                                                  borderRadius: 22.5,
-                                                  color: Colors.lightBlue,
-                                                  shadowColor: Color.fromARGB(
-                                                      255, 0, 99, 145),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Container(
-                          width: 500,
-                          child: Column(
-                            children: <Widget>[
-                              FittedBox(
-                                child: Container(
-                                  width: 500,
-                                  height: 352,
-                                  decoration: BoxDecoration(
-                                    image: DecorationImage(
-                                      alignment: Alignment.topCenter,
-                                      fit: BoxFit.contain,
-                                      image: AssetImage(
-                                          'assets/content4_projects.png'),
-                                    ),
+                                      topLeft: Radius.circular(20),
+                                      topRight: Radius.circular(20)),
+                                  child: Image.asset(
+                                    'assets/content_projects/content4_projects.png',
+                                    width: 500,
+                                    height: 352,
                                   ),
                                 ),
                               ),
@@ -1173,7 +929,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
                                           ),
                                         ),
                                         Text(
-                                          'List of menus with attractive designs for your business. Created on 18/10/2023.',
+                                          'List of menus with attractive designs for your business. I made it using Corel Draw. Created on 18/10/2023.',
                                           style: GoogleFonts.arima(
                                             fontSize: 10,
                                             color:
@@ -1232,7 +988,13 @@ class _ProjectsPageState extends State<ProjectsPage> {
                                                       ),
                                                     ],
                                                   ),
-                                                  onTap: () {},
+                                                  onTap: () {
+                                                    Navigator.push(
+                                                        context,
+                                                        MaterialPageRoute(
+                                                            builder: (context) =>
+                                                                MenuListMockupDesign()));
+                                                  },
                                                   type: null,
                                                   isOutline: true,
                                                   borderColor: Color.fromARGB(
@@ -1247,6 +1009,98 @@ class _ProjectsPageState extends State<ProjectsPage> {
                                                       255, 0, 115, 5),
                                                 ),
                                               ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          width: 500,
+                          child: Column(
+                            children: <Widget>[
+                              FittedBox(
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.only(
+                                      topLeft: Radius.circular(20),
+                                      topRight: Radius.circular(20)),
+                                  child: Image.asset(
+                                    'assets/content_projects/content3_projects.png',
+                                    width: 500,
+                                    height: 352,
+                                  ),
+                                ),
+                              ),
+                              Container(
+                                padding: EdgeInsets.all(10),
+                                alignment: Alignment.topLeft,
+                                decoration: BoxDecoration(
+                                  border: Border(
+                                    left: BorderSide(
+                                      color: Color.fromARGB(255, 169, 157, 203),
+                                    ),
+                                    right: BorderSide(
+                                      color: Color.fromARGB(255, 169, 157, 203),
+                                    ),
+                                    bottom: BorderSide(
+                                      color: Color.fromARGB(255, 169, 157, 203),
+                                    ),
+                                  ),
+                                  borderRadius: BorderRadius.only(
+                                    bottomLeft: Radius.circular(20),
+                                    bottomRight: Radius.circular(20),
+                                  ),
+                                ),
+                                child: Column(
+                                  children: [
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Booth Mockup Design',
+                                          style: GoogleFonts.arima(
+                                            fontSize: 25,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        Text(
+                                          'Beautiful and attractive mockup design for promotional needs. I made it using Corel Draw. Created on 02/11/2023.',
+                                          style: GoogleFonts.arima(
+                                            fontSize: 10,
+                                            color:
+                                                (Theme.of(context).brightness ==
+                                                        Brightness.light
+                                                    ? Color.fromARGB(
+                                                        225, 25, 25, 25)
+                                                    : Colors.white70),
+                                          ),
+                                          textScaleFactor:
+                                              ScaleSize.textScaleFactor(
+                                                  context),
+                                        ),
+                                      ],
+                                    ),
+                                    SizedBox(
+                                      height: 5,
+                                    ),
+                                    Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(top: 10),
+                                          child: Wrap(
+                                            alignment: WrapAlignment.center,
+                                            spacing: 5,
+                                            runSpacing: 5,
+                                            children: <Widget>[
                                               Container(
                                                 height: 30,
                                                 width: 130,
@@ -1258,7 +1112,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
                                                             .center,
                                                     children: [
                                                       Icon(
-                                                        Icons.share_rounded,
+                                                        Icons.file_open_rounded,
                                                         size: 17,
                                                         color: Colors.white,
                                                       ),
@@ -1266,7 +1120,7 @@ class _ProjectsPageState extends State<ProjectsPage> {
                                                         width: 5,
                                                       ),
                                                       Text(
-                                                        'Share Link',
+                                                        'Show Design',
                                                         style:
                                                             GoogleFonts.arima(
                                                           fontSize: 12,
@@ -1275,19 +1129,300 @@ class _ProjectsPageState extends State<ProjectsPage> {
                                                       ),
                                                     ],
                                                   ),
-                                                  onTap: () {},
+                                                  onTap: () {
+                                                    Navigator.push(
+                                                        context,
+                                                        MaterialPageRoute(
+                                                            builder: (context) =>
+                                                                BoothMockup()));
+                                                  },
                                                   type: null,
                                                   isOutline: true,
-                                                  borderColor:
-                                                      const Color.fromARGB(
-                                                          255, 0, 51, 75),
+                                                  borderColor: Color.fromARGB(
+                                                      255, 0, 68, 5),
                                                   borderWidth: 1,
                                                   height: 30,
                                                   width: 130,
                                                   borderRadius: 22.5,
-                                                  color: Colors.lightBlue,
+                                                  color: Color.fromARGB(
+                                                      255, 9, 177, 17),
                                                   shadowColor: Color.fromARGB(
-                                                      255, 0, 99, 145),
+                                                      255, 0, 115, 5),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          width: 500,
+                          child: Column(
+                            children: <Widget>[
+                              FittedBox(
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.only(
+                                      topLeft: Radius.circular(20),
+                                      topRight: Radius.circular(20)),
+                                  child: Image.asset(
+                                    'assets/content_projects/content5_projects.png',
+                                    width: 500,
+                                    height: 352,
+                                  ),
+                                ),
+                              ),
+                              Container(
+                                padding: EdgeInsets.all(10),
+                                alignment: Alignment.topLeft,
+                                decoration: BoxDecoration(
+                                  border: Border(
+                                    left: BorderSide(
+                                      color: Color.fromARGB(255, 166, 166, 166),
+                                    ),
+                                    right: BorderSide(
+                                      color: Color.fromARGB(255, 166, 166, 166),
+                                    ),
+                                    bottom: BorderSide(
+                                      color: Color.fromARGB(255, 166, 166, 166),
+                                    ),
+                                  ),
+                                  borderRadius: BorderRadius.only(
+                                    bottomLeft: Radius.circular(20),
+                                    bottomRight: Radius.circular(20),
+                                  ),
+                                ),
+                                child: Column(
+                                  children: [
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Website Madaniplash',
+                                          style: GoogleFonts.arima(
+                                            fontSize: 25,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        Text(
+                                          'This is a website for a client, namely Madaniplash, a company engaged in the injection and blowing of HDPE and LDPE plastic. This is a project resulting from my field work practice while at Ajak Online. I made it using WordPress. Created on 30/01/2024.',
+                                          style: GoogleFonts.arima(
+                                            fontSize: 10,
+                                            color:
+                                                (Theme.of(context).brightness ==
+                                                        Brightness.light
+                                                    ? Color.fromARGB(
+                                                        225, 25, 25, 25)
+                                                    : Colors.white70),
+                                          ),
+                                          textScaleFactor:
+                                              ScaleSize.textScaleFactor(
+                                                  context),
+                                        ),
+                                      ],
+                                    ),
+                                    SizedBox(
+                                      height: 5,
+                                    ),
+                                    Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(top: 10),
+                                          child: Wrap(
+                                            alignment: WrapAlignment.center,
+                                            spacing: 5,
+                                            runSpacing: 5,
+                                            children: <Widget>[
+                                              Container(
+                                                height: 30,
+                                                width: 130,
+                                                child: AnimatedButton(
+                                                  duration: 1,
+                                                  child: Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .center,
+                                                    children: [
+                                                      Icon(
+                                                        Icons.open_in_browser,
+                                                        size: 17,
+                                                        color: Colors.white,
+                                                      ),
+                                                      SizedBox(
+                                                        width: 5,
+                                                      ),
+                                                      Text(
+                                                        'Demo Project',
+                                                        style:
+                                                            GoogleFonts.arima(
+                                                          fontSize: 12,
+                                                          color: Colors.white,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  onTap: () {
+                                                    launch(
+                                                        'https://madaniplast.com/');
+                                                  },
+                                                  type: null,
+                                                  isOutline: true,
+                                                  borderColor: Color.fromARGB(
+                                                      255, 0, 68, 5),
+                                                  borderWidth: 1,
+                                                  height: 30,
+                                                  width: 130,
+                                                  borderRadius: 22.5,
+                                                  color: Colors
+                                                      .lightBlueAccent.shade700,
+                                                  shadowColor:
+                                                      Colors.blue.shade900,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          width: 500,
+                          child: Column(
+                            children: <Widget>[
+                              FittedBox(
+                                  child: ClipRRect(
+                                borderRadius: BorderRadius.only(
+                                    topLeft: Radius.circular(20),
+                                    topRight: Radius.circular(20)),
+                                child: Image.asset(
+                                  'assets/content_projects/content6_projects.png',
+                                  width: 500,
+                                  height: 352,
+                                ),
+                              )),
+                              Container(
+                                padding: EdgeInsets.all(10),
+                                alignment: Alignment.topLeft,
+                                decoration: BoxDecoration(
+                                  border: Border(
+                                    left: BorderSide(
+                                      color: Color.fromARGB(255, 148, 185, 255),
+                                    ),
+                                    right: BorderSide(
+                                      color: Color.fromARGB(255, 148, 185, 255),
+                                    ),
+                                    bottom: BorderSide(
+                                      color: Color.fromARGB(255, 148, 185, 255),
+                                    ),
+                                  ),
+                                  borderRadius: BorderRadius.only(
+                                    bottomLeft: Radius.circular(20),
+                                    bottomRight: Radius.circular(20),
+                                  ),
+                                ),
+                                child: Column(
+                                  children: [
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Website Prim Research',
+                                          style: GoogleFonts.arima(
+                                            fontSize: 25,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        Text(
+                                          'PRIM Market & Social Research is a social research institute and marketing study center that provides services. This is a project resulting from my field work practice while at Ajak Online. I made it using WordPress. Created on 01/02/2024.',
+                                          style: GoogleFonts.arima(
+                                            fontSize: 10,
+                                            color:
+                                                (Theme.of(context).brightness ==
+                                                        Brightness.light
+                                                    ? Color.fromARGB(
+                                                        225, 25, 25, 25)
+                                                    : Colors.white70),
+                                          ),
+                                          textScaleFactor:
+                                              ScaleSize.textScaleFactor(
+                                                  context),
+                                        ),
+                                      ],
+                                    ),
+                                    SizedBox(
+                                      height: 5,
+                                    ),
+                                    Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(top: 10),
+                                          child: Wrap(
+                                            alignment: WrapAlignment.center,
+                                            spacing: 5,
+                                            runSpacing: 5,
+                                            children: <Widget>[
+                                              Container(
+                                                height: 30,
+                                                width: 130,
+                                                child: AnimatedButton(
+                                                  duration: 1,
+                                                  child: Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .center,
+                                                    children: [
+                                                      Icon(
+                                                        Icons.open_in_browser,
+                                                        size: 17,
+                                                        color: Colors.white,
+                                                      ),
+                                                      SizedBox(
+                                                        width: 5,
+                                                      ),
+                                                      Text(
+                                                        'Demo Project',
+                                                        style:
+                                                            GoogleFonts.arima(
+                                                          fontSize: 12,
+                                                          color: Colors.white,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  onTap: () {
+                                                    launch(
+                                                        'https://primresearch.com/');
+                                                  },
+                                                  type: null,
+                                                  isOutline: true,
+                                                  borderColor: Color.fromARGB(
+                                                      255, 0, 68, 5),
+                                                  borderWidth: 1,
+                                                  height: 30,
+                                                  width: 130,
+                                                  borderRadius: 22.5,
+                                                  color: Colors
+                                                      .lightBlueAccent.shade700,
+                                                  shadowColor:
+                                                      Colors.blue.shade900,
                                                 ),
                                               ),
                                             ],
@@ -1315,8 +1450,8 @@ class _ProjectsPageState extends State<ProjectsPage> {
               style: GoogleFonts.arima(
                 fontSize: 12,
                 color: (Theme.of(context).brightness == Brightness.light
-                    ? Colors.black54
-                    : Colors.white60),
+                    ? Colors.black
+                    : Colors.white),
               ),
             ),
           ),

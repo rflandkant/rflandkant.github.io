@@ -9,6 +9,7 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:footer/footer.dart';
 import 'package:button_animations/button_animations.dart';
+import 'package:rifal_anandika/main.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:adaptive_theme/adaptive_theme.dart';
@@ -18,6 +19,7 @@ import 'halaman_projects.dart';
 import 'halaman_about.dart';
 import 'halaman_tools.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:provider/provider.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -27,9 +29,9 @@ class HomePage extends StatefulWidget {
 }
 
 final List<String> imgList = [
-  'assets/content1.png',
-  'assets/content2.png',
-  'assets/content3.png',
+  'assets/content_home/content1.png',
+  'assets/content_home/content2.png',
+  'assets/content_home/content3.png',
 ];
 
 class ScaleSize {
@@ -76,6 +78,7 @@ final List<Widget> imageSliders = imgList
           ),
         ))
     .toList();
+
 int _current = 0;
 
 final CarouselController _controller = CarouselController();
@@ -121,26 +124,73 @@ class _HomePageState extends State<HomePage> {
               margin: EdgeInsets.only(right: 15),
               child: Row(
                 children: [
-                  LikeButton(
-                    countPostion: CountPostion.bottom,
-                    circleColor:
-                        CircleColor(start: Colors.red, end: Colors.red),
-                    bubblesColor: BubblesColor(
-                      dotPrimaryColor: Colors.red,
-                      dotSecondaryColor: Colors.red,
-                    ),
-                    likeBuilder: (bool isLiked) {
-                      return Icon(
-                        Icons.favorite_rounded,
-                        color: isLiked ? Colors.pink : Colors.grey,
-                        size: 30,
-                      );
-                    },
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Consumer<LikeModel>(
+                        builder: (context, likeModel, _) {
+                          return LikeButton(
+                            size: 30,
+                            countPostion: CountPostion.right,
+                            bubblesColor: BubblesColor(
+                              dotPrimaryColor: likeModel.isLiked
+                                  ? Colors.redAccent
+                                  : Theme.of(context).brightness ==
+                                          Brightness.light
+                                      ? const Color.fromARGB(0, 255, 255, 255)
+                                      : Colors.transparent,
+                              dotSecondaryColor: likeModel.isLiked
+                                  ? Colors.redAccent
+                                  : Theme.of(context).brightness ==
+                                          Brightness.light
+                                      ? const Color.fromARGB(0, 255, 255, 255)
+                                      : Colors.transparent,
+                            ),
+                            circleColor: CircleColor(
+                              start: likeModel.isLiked
+                                  ? Colors.redAccent
+                                  : const Color.fromARGB(0, 255, 255, 255),
+                              end: likeModel.isLiked
+                                  ? Colors.redAccent
+                                  : const Color.fromARGB(0, 255, 255, 255),
+                            ),
+                            likeBuilder: (bool isLiked) {
+                              return Icon(
+                                Icons.favorite_rounded,
+                                color: likeModel.isLiked
+                                    ? Colors.redAccent
+                                    : Colors.grey,
+                                size: 30,
+                              );
+                            },
+                            onTap: (isLiked) async {
+                              Provider.of<LikeModel>(context, listen: false)
+                                  .incrementLike();
+                              return !isLiked;
+                            },
+                          );
+                        },
+                      ),
+                      SizedBox(height: 1.5),
+                      // Indikator Jumlah Like
+                      Consumer<LikeModel>(
+                        builder: (context, likeModel, _) {
+                          return Text(
+                            '${likeModel.likeCount}',
+                            style: GoogleFonts.arima(fontSize: 12),
+                          );
+                        },
+                      ),
+                    ],
                   ),
                   SizedBox(
-                    width: 3,
+                    width: 10,
                   ),
                   Switch(
+                    thumbIcon: WidgetStatePropertyAll(Icon(
+                        Theme.of(context).brightness == Brightness.light
+                            ? Icons.brightness_7
+                            : Icons.brightness_4)),
                     value: AdaptiveTheme.of(context).mode.isDark,
                     onChanged: (value) {
                       if (value) {
@@ -184,7 +234,8 @@ class _HomePageState extends State<HomePage> {
                           ),
                         ],
                         image: DecorationImage(
-                          image: AssetImage('assets/background_drawer.jpg'),
+                          image:
+                              AssetImage('assets/drawer/background_drawer.jpg'),
                           fit: BoxFit.cover,
                           colorFilter: ColorFilter.mode(
                               Color.fromARGB(153, 0, 0, 0), BlendMode.darken),
@@ -202,7 +253,7 @@ class _HomePageState extends State<HomePage> {
                                     width: 0.5),
                                 image: DecorationImage(
                                   image: AssetImage(
-                                    'assets/profil.png',
+                                    'assets/drawer/profil.png',
                                   ),
                                   fit: BoxFit.cover,
                                 ),
@@ -235,6 +286,10 @@ class _HomePageState extends State<HomePage> {
                                     animatedTexts: [
                                       TypewriterAnimatedText(
                                         'Frontend Developer',
+                                        speed: Duration(milliseconds: 150),
+                                      ),
+                                      TypewriterAnimatedText(
+                                        'Mobile Developer',
                                         speed: Duration(milliseconds: 150),
                                       ),
                                       TypewriterAnimatedText(
@@ -510,11 +565,18 @@ class _HomePageState extends State<HomePage> {
                       Container(
                         child: FittedBox(
                             child: AnimatedTextKit(
-                          pause: Duration(seconds: 10),
+                          pause: Duration(seconds: 3),
                           animatedTexts: [
                             WavyAnimatedText(
                               speed: Duration(milliseconds: 250),
                               'Frontend Developer',
+                              textStyle: GoogleFonts.rampartOne(
+                                  color: Color.fromARGB(255, 9, 177, 17),
+                                  fontSize: 70),
+                            ),
+                            WavyAnimatedText(
+                              speed: Duration(milliseconds: 250),
+                              'Mobile Developer',
                               textStyle: GoogleFonts.rampartOne(
                                   color: Color.fromARGB(255, 9, 177, 17),
                                   fontSize: 70),
@@ -627,7 +689,7 @@ class _HomePageState extends State<HomePage> {
                                       margin: EdgeInsets.only(
                                         top: 40,
                                       ),
-                                      width: 275,
+                                      width: 300,
                                       padding: EdgeInsets.only(
                                         left: 50,
                                         top: 40,
@@ -666,7 +728,7 @@ class _HomePageState extends State<HomePage> {
                                                 decoration: BoxDecoration(
                                                   image: DecorationImage(
                                                     image: AssetImage(
-                                                        'assets/logohtml.png'),
+                                                        'assets/logo/logohtml.png'),
                                                   ),
                                                 ),
                                               ),
@@ -711,7 +773,7 @@ class _HomePageState extends State<HomePage> {
                                                 decoration: BoxDecoration(
                                                   image: DecorationImage(
                                                     image: AssetImage(
-                                                        'assets/logocss.png'),
+                                                        'assets/logo/logocss.png'),
                                                   ),
                                                 ),
                                               ),
@@ -756,7 +818,7 @@ class _HomePageState extends State<HomePage> {
                                                 decoration: BoxDecoration(
                                                   image: DecorationImage(
                                                     image: AssetImage(
-                                                        'assets/logobootstrap.png'),
+                                                        'assets/logo/logobootstrap.png'),
                                                   ),
                                                 ),
                                               ),
@@ -801,7 +863,7 @@ class _HomePageState extends State<HomePage> {
                                                 decoration: BoxDecoration(
                                                   image: DecorationImage(
                                                     image: AssetImage(
-                                                        'assets/logodart.png'),
+                                                        'assets/logo/logodart.png'),
                                                   ),
                                                 ),
                                               ),
@@ -846,7 +908,7 @@ class _HomePageState extends State<HomePage> {
                                                 decoration: BoxDecoration(
                                                   image: DecorationImage(
                                                     image: AssetImage(
-                                                        'assets/logoflutter.png'),
+                                                        'assets/logo/logoflutter.png'),
                                                   ),
                                                 ),
                                               ),
@@ -935,7 +997,7 @@ class _HomePageState extends State<HomePage> {
                                       margin: EdgeInsets.only(
                                         top: 40,
                                       ),
-                                      width: 275,
+                                      width: 300,
                                       padding: EdgeInsets.only(
                                         left: 50,
                                         top: 40,
@@ -974,7 +1036,7 @@ class _HomePageState extends State<HomePage> {
                                                 decoration: BoxDecoration(
                                                   image: DecorationImage(
                                                     image: AssetImage(
-                                                        'assets/logovscode.png'),
+                                                        'assets/logo/logovscode.png'),
                                                   ),
                                                 ),
                                               ),
@@ -1019,7 +1081,7 @@ class _HomePageState extends State<HomePage> {
                                                 decoration: BoxDecoration(
                                                   image: DecorationImage(
                                                     image: AssetImage(
-                                                        'assets/logofirebase.png'),
+                                                        'assets/logo/logofirebase.png'),
                                                   ),
                                                 ),
                                               ),
@@ -1064,7 +1126,7 @@ class _HomePageState extends State<HomePage> {
                                                 decoration: BoxDecoration(
                                                   image: DecorationImage(
                                                     image: AssetImage(
-                                                        'assets/logoxampp.png'),
+                                                        'assets/logo/logoxampp.png'),
                                                   ),
                                                 ),
                                               ),
@@ -1109,7 +1171,7 @@ class _HomePageState extends State<HomePage> {
                                                 decoration: BoxDecoration(
                                                   image: DecorationImage(
                                                     image: AssetImage(
-                                                        'assets/logomysql.png'),
+                                                        'assets/logo/logomysql.png'),
                                                   ),
                                                 ),
                                               ),
@@ -1154,7 +1216,7 @@ class _HomePageState extends State<HomePage> {
                                                 decoration: BoxDecoration(
                                                   image: DecorationImage(
                                                     image: AssetImage(
-                                                        'assets/logogit.png'),
+                                                        'assets/logo/logogit.png'),
                                                   ),
                                                 ),
                                               ),
@@ -1541,13 +1603,13 @@ class _HomePageState extends State<HomePage> {
                               image: DecorationImage(
                                   fit: BoxFit.cover,
                                   image: AssetImage(
-                                    'assets/quotes.jpg',
+                                    'assets/content_home/quotes.jpg',
                                   ),
                                   colorFilter: ColorFilter.mode(
                                       (Theme.of(context).brightness ==
                                               Brightness.light
                                           ? Colors.transparent
-                                          : Color.fromARGB(180, 0, 0, 0)),
+                                          : Color.fromARGB(100, 0, 0, 0)),
                                       BlendMode.darken)),
                               borderRadius: BorderRadius.circular(10),
                               boxShadow: [
@@ -1671,7 +1733,7 @@ class _HomePageState extends State<HomePage> {
               'Copyright © 2023 Rifal Anandika. All rights reserved.',
               style: GoogleFonts.arima(
                 fontSize: 12,
-                color: Colors.white60,
+                color: Colors.white,
               ),
             ),
           ),

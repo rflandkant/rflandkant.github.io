@@ -8,50 +8,14 @@ import 'package:footer/footer.dart';
 import 'package:button_animations/button_animations.dart';
 import 'package:rifal_anandika/halaman_about.dart';
 import 'package:rifal_anandika/halaman_projects.dart';
+import 'package:rifal_anandika/main.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:like_button/like_button.dart';
 import 'halaman_home.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  final savedThemeMode = await AdaptiveTheme.getThemeMode();
-  runApp(MyWidget(savedThemeMode: savedThemeMode));
-}
-
-class MyWidget extends StatelessWidget {
-  final AdaptiveThemeMode? savedThemeMode;
-
-  const MyWidget({super.key, this.savedThemeMode});
-  @override
-  Widget build(BuildContext context) {
-    return AdaptiveTheme(
-      debugShowFloatingThemeButton: false,
-      light: ThemeData(
-        useMaterial3: true,
-        brightness: Brightness.light,
-        colorScheme:
-            ColorScheme.fromSeed(seedColor: Color.fromARGB(255, 255, 251, 254)),
-      ),
-      dark: ThemeData(
-        useMaterial3: true,
-        brightness: Brightness.dark,
-        colorScheme:
-            ColorScheme.fromSeed(seedColor: Color.fromARGB(255, 28, 27, 31)),
-      ),
-      initial: savedThemeMode ?? AdaptiveThemeMode.light,
-      builder: (theme, darkTheme) => MaterialApp(
-        debugShowCheckedModeBanner: false,
-        title: 'rflandkant',
-        theme: theme,
-        darkTheme: darkTheme,
-        home: const SkillsPage(),
-      ),
-    );
-  }
-}
+import 'package:provider/provider.dart';
 
 class SkillsPage extends StatefulWidget {
   const SkillsPage({super.key});
@@ -101,26 +65,73 @@ class _SkillsPageState extends State<SkillsPage> {
               margin: EdgeInsets.only(right: 15),
               child: Row(
                 children: [
-                  LikeButton(
-                    countPostion: CountPostion.bottom,
-                    circleColor:
-                        CircleColor(start: Colors.red, end: Colors.red),
-                    bubblesColor: BubblesColor(
-                      dotPrimaryColor: Colors.red,
-                      dotSecondaryColor: Colors.red,
-                    ),
-                    likeBuilder: (bool isLiked) {
-                      return Icon(
-                        Icons.favorite_rounded,
-                        color: isLiked ? Colors.pink : Colors.grey,
-                        size: 30,
-                      );
-                    },
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Consumer<LikeModel>(
+                        builder: (context, likeModel, _) {
+                          return LikeButton(
+                            size: 30,
+                            countPostion: CountPostion.right,
+                            bubblesColor: BubblesColor(
+                              dotPrimaryColor: likeModel.isLiked
+                                  ? Colors.redAccent
+                                  : Theme.of(context).brightness ==
+                                          Brightness.light
+                                      ? const Color.fromARGB(0, 255, 255, 255)
+                                      : Colors.transparent,
+                              dotSecondaryColor: likeModel.isLiked
+                                  ? Colors.redAccent
+                                  : Theme.of(context).brightness ==
+                                          Brightness.light
+                                      ? const Color.fromARGB(0, 255, 255, 255)
+                                      : Colors.transparent,
+                            ),
+                            circleColor: CircleColor(
+                              start: likeModel.isLiked
+                                  ? Colors.redAccent
+                                  : const Color.fromARGB(0, 255, 255, 255),
+                              end: likeModel.isLiked
+                                  ? Colors.redAccent
+                                  : const Color.fromARGB(0, 255, 255, 255),
+                            ),
+                            likeBuilder: (bool isLiked) {
+                              return Icon(
+                                Icons.favorite_rounded,
+                                color: likeModel.isLiked
+                                    ? Colors.redAccent
+                                    : Colors.grey,
+                                size: 30,
+                              );
+                            },
+                            onTap: (isLiked) async {
+                              Provider.of<LikeModel>(context, listen: false)
+                                  .incrementLike();
+                              return !isLiked;
+                            },
+                          );
+                        },
+                      ),
+                      SizedBox(height: 1.5),
+                      // Indikator Jumlah Like
+                      Consumer<LikeModel>(
+                        builder: (context, likeModel, _) {
+                          return Text(
+                            '${likeModel.likeCount}',
+                            style: GoogleFonts.arima(fontSize: 12),
+                          );
+                        },
+                      ),
+                    ],
                   ),
                   SizedBox(
-                    width: 3,
+                    width: 10,
                   ),
                   Switch(
+                    thumbIcon: WidgetStatePropertyAll(Icon(
+                        Theme.of(context).brightness == Brightness.light
+                            ? Icons.brightness_7
+                            : Icons.brightness_4)),
                     value: AdaptiveTheme.of(context).mode.isDark,
                     onChanged: (value) {
                       if (value) {
@@ -164,7 +175,8 @@ class _SkillsPageState extends State<SkillsPage> {
                           ),
                         ],
                         image: DecorationImage(
-                          image: AssetImage('assets/background_drawer.jpg'),
+                          image:
+                              AssetImage('assets/drawer/background_drawer.jpg'),
                           fit: BoxFit.cover,
                           colorFilter: ColorFilter.mode(
                               Color.fromARGB(153, 0, 0, 0), BlendMode.darken),
@@ -182,7 +194,7 @@ class _SkillsPageState extends State<SkillsPage> {
                                     width: 0.5),
                                 image: DecorationImage(
                                   image: AssetImage(
-                                    'assets/profil.png',
+                                    'assets/drawer/profil.png',
                                   ),
                                   fit: BoxFit.cover,
                                 ),
@@ -213,6 +225,10 @@ class _SkillsPageState extends State<SkillsPage> {
                                   ),
                                   child: AnimatedTextKit(
                                     animatedTexts: [
+                                      TypewriterAnimatedText(
+                                        'Frontend Developer',
+                                        speed: Duration(milliseconds: 150),
+                                      ),
                                       TypewriterAnimatedText(
                                         'Frontend Developer',
                                         speed: Duration(milliseconds: 150),
@@ -522,7 +538,7 @@ class _SkillsPageState extends State<SkillsPage> {
                                         decoration: BoxDecoration(
                                           image: DecorationImage(
                                             image: AssetImage(
-                                                'assets/logohtml.png'),
+                                                'assets/logo/logohtml.png'),
                                           ),
                                         ),
                                       ),
@@ -565,7 +581,7 @@ class _SkillsPageState extends State<SkillsPage> {
                                         decoration: BoxDecoration(
                                           image: DecorationImage(
                                             image: AssetImage(
-                                                'assets/logocss.png'),
+                                                'assets/logo/logocss.png'),
                                           ),
                                         ),
                                       ),
@@ -608,7 +624,7 @@ class _SkillsPageState extends State<SkillsPage> {
                                         decoration: BoxDecoration(
                                           image: DecorationImage(
                                             image: AssetImage(
-                                                'assets/logobootstrap.png'),
+                                                'assets/logo/logobootstrap.png'),
                                           ),
                                         ),
                                       ),
@@ -651,7 +667,7 @@ class _SkillsPageState extends State<SkillsPage> {
                                         decoration: BoxDecoration(
                                           image: DecorationImage(
                                             image: AssetImage(
-                                                'assets/logodart.png'),
+                                                'assets/logo/logodart.png'),
                                           ),
                                         ),
                                       ),
@@ -694,7 +710,7 @@ class _SkillsPageState extends State<SkillsPage> {
                                         decoration: BoxDecoration(
                                           image: DecorationImage(
                                             image: AssetImage(
-                                                'assets/logoflutter.png'),
+                                                'assets/logo/logoflutter.png'),
                                           ),
                                         ),
                                       ),
@@ -736,8 +752,8 @@ class _SkillsPageState extends State<SkillsPage> {
                                         height: 70,
                                         decoration: BoxDecoration(
                                           image: DecorationImage(
-                                            image:
-                                                AssetImage('assets/logojs.jpg'),
+                                            image: AssetImage(
+                                                'assets/logo/logojs.jpg'),
                                           ),
                                         ),
                                       ),
@@ -780,7 +796,7 @@ class _SkillsPageState extends State<SkillsPage> {
                                         decoration: BoxDecoration(
                                           image: DecorationImage(
                                             image: AssetImage(
-                                                'assets/logonodejs.png'),
+                                                'assets/logo/logonodejs.png'),
                                           ),
                                         ),
                                       ),
@@ -823,7 +839,7 @@ class _SkillsPageState extends State<SkillsPage> {
                                         decoration: BoxDecoration(
                                           image: DecorationImage(
                                             image: AssetImage(
-                                                'assets/logophp.png'),
+                                                'assets/logo/logophp.png'),
                                           ),
                                         ),
                                       ),
@@ -866,7 +882,7 @@ class _SkillsPageState extends State<SkillsPage> {
                                         decoration: BoxDecoration(
                                           image: DecorationImage(
                                             image: AssetImage(
-                                                'assets/logolaravel.png'),
+                                                'assets/logo/logolaravel.png'),
                                           ),
                                         ),
                                       ),
@@ -908,8 +924,8 @@ class _SkillsPageState extends State<SkillsPage> {
                                         height: 70,
                                         decoration: BoxDecoration(
                                           image: DecorationImage(
-                                            image:
-                                                AssetImage('assets/logoci.png'),
+                                            image: AssetImage(
+                                                'assets/logo/logoci.png'),
                                           ),
                                         ),
                                       ),
@@ -952,7 +968,7 @@ class _SkillsPageState extends State<SkillsPage> {
                                         decoration: BoxDecoration(
                                           image: DecorationImage(
                                             image: AssetImage(
-                                                'assets/logoblogger.png'),
+                                                'assets/logo/logoblogger.png'),
                                           ),
                                         ),
                                       ),
@@ -994,8 +1010,8 @@ class _SkillsPageState extends State<SkillsPage> {
                                         height: 70,
                                         decoration: BoxDecoration(
                                           image: DecorationImage(
-                                            image:
-                                                AssetImage('assets/logowp.png'),
+                                            image: AssetImage(
+                                                'assets/logo/logowp.png'),
                                           ),
                                         ),
                                       ),
@@ -1038,7 +1054,7 @@ class _SkillsPageState extends State<SkillsPage> {
                                         decoration: BoxDecoration(
                                           image: DecorationImage(
                                             image: AssetImage(
-                                                'assets/logowix.png'),
+                                                'assets/logo/logowix.png'),
                                           ),
                                         ),
                                       ),
@@ -1134,7 +1150,7 @@ class _SkillsPageState extends State<SkillsPage> {
                                         decoration: BoxDecoration(
                                           image: DecorationImage(
                                             image: AssetImage(
-                                                'assets/logovscode.png'),
+                                                'assets/logo/logovscode.png'),
                                           ),
                                         ),
                                       ),
@@ -1177,7 +1193,7 @@ class _SkillsPageState extends State<SkillsPage> {
                                         decoration: BoxDecoration(
                                           image: DecorationImage(
                                             image: AssetImage(
-                                                'assets/logofirebase.png'),
+                                                'assets/logo/logofirebase.png'),
                                           ),
                                         ),
                                       ),
@@ -1220,7 +1236,7 @@ class _SkillsPageState extends State<SkillsPage> {
                                         decoration: BoxDecoration(
                                           image: DecorationImage(
                                             image: AssetImage(
-                                                'assets/logoxampp.png'),
+                                                'assets/logo/logoxampp.png'),
                                           ),
                                         ),
                                       ),
@@ -1263,7 +1279,7 @@ class _SkillsPageState extends State<SkillsPage> {
                                         decoration: BoxDecoration(
                                           image: DecorationImage(
                                             image: AssetImage(
-                                                'assets/logomysql.png'),
+                                                'assets/logo/logomysql.png'),
                                           ),
                                         ),
                                       ),
@@ -1306,7 +1322,7 @@ class _SkillsPageState extends State<SkillsPage> {
                                         decoration: BoxDecoration(
                                           image: DecorationImage(
                                             image: AssetImage(
-                                                'assets/logogit.png'),
+                                                'assets/logo/logogit.png'),
                                           ),
                                         ),
                                       ),
@@ -1349,7 +1365,7 @@ class _SkillsPageState extends State<SkillsPage> {
                                         decoration: BoxDecoration(
                                           image: DecorationImage(
                                             image: AssetImage(
-                                                'assets/logonetlify.png'),
+                                                'assets/logo/logonetlify.png'),
                                           ),
                                         ),
                                       ),
@@ -1392,7 +1408,7 @@ class _SkillsPageState extends State<SkillsPage> {
                                         decoration: BoxDecoration(
                                           image: DecorationImage(
                                             image: AssetImage(
-                                                'assets/logovercel.png'),
+                                                'assets/logo/logovercel.png'),
                                           ),
                                         ),
                                       ),
@@ -1435,7 +1451,7 @@ class _SkillsPageState extends State<SkillsPage> {
                                         decoration: BoxDecoration(
                                           image: DecorationImage(
                                             image: AssetImage(
-                                                'assets/logofigma.png'),
+                                                'assets/logo/logofigma.png'),
                                           ),
                                         ),
                                       ),
@@ -1478,7 +1494,7 @@ class _SkillsPageState extends State<SkillsPage> {
                                         decoration: BoxDecoration(
                                           image: DecorationImage(
                                             image: AssetImage(
-                                                'assets/logocanva.png'),
+                                                'assets/logo/logocanva.png'),
                                           ),
                                         ),
                                       ),
@@ -1521,7 +1537,7 @@ class _SkillsPageState extends State<SkillsPage> {
                                         decoration: BoxDecoration(
                                           image: DecorationImage(
                                             image: AssetImage(
-                                                'assets/logocoreldraw.png'),
+                                                'assets/logo/logocoreldraw.png'),
                                           ),
                                         ),
                                       ),
@@ -1564,7 +1580,7 @@ class _SkillsPageState extends State<SkillsPage> {
                                         decoration: BoxDecoration(
                                           image: DecorationImage(
                                             image: AssetImage(
-                                                'assets/logophotoshop.png'),
+                                                'assets/logo/logophotoshop.png'),
                                           ),
                                         ),
                                       ),
@@ -1607,7 +1623,7 @@ class _SkillsPageState extends State<SkillsPage> {
                                         decoration: BoxDecoration(
                                           image: DecorationImage(
                                             image: AssetImage(
-                                                'assets/logocapcut.png'),
+                                                'assets/logo/logocapcut.png'),
                                           ),
                                         ),
                                       ),
@@ -1669,8 +1685,8 @@ class _SkillsPageState extends State<SkillsPage> {
               style: GoogleFonts.arima(
                 fontSize: 12,
                 color: (Theme.of(context).brightness == Brightness.light
-                    ? Colors.black54
-                    : Colors.white60),
+                    ? Colors.black
+                    : Colors.white),
               ),
             ),
           ),

@@ -8,46 +8,14 @@ import 'package:footer/footer.dart';
 import 'package:button_animations/button_animations.dart';
 import 'package:rifal_anandika/halaman_projects.dart';
 import 'package:rifal_anandika/halaman_skills.dart';
+import 'package:rifal_anandika/main.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:like_button/like_button.dart';
 import 'halaman_home.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  final savedThemeMode = await AdaptiveTheme.getThemeMode();
-  runApp(MyWidget(savedThemeMode: savedThemeMode));
-}
-
-class MyWidget extends StatelessWidget {
-  final AdaptiveThemeMode? savedThemeMode;
-
-  const MyWidget({super.key, this.savedThemeMode});
-  @override
-  Widget build(BuildContext context) {
-    return AdaptiveTheme(
-      debugShowFloatingThemeButton: false,
-      light: ThemeData(
-        useMaterial3: true,
-        brightness: Brightness.light,
-      ),
-      dark: ThemeData(
-        useMaterial3: true,
-        brightness: Brightness.dark,
-      ),
-      initial: savedThemeMode ?? AdaptiveThemeMode.light,
-      builder: (theme, darkTheme) => MaterialApp(
-        debugShowCheckedModeBanner: false,
-        title: 'rflandkant',
-        theme: theme,
-        darkTheme: darkTheme,
-        home: const AboutPage(),
-      ),
-    );
-  }
-}
+import 'package:provider/provider.dart';
 
 class AboutPage extends StatefulWidget {
   const AboutPage({super.key});
@@ -97,26 +65,73 @@ class _AboutPageState extends State<AboutPage> {
               margin: EdgeInsets.only(right: 15),
               child: Row(
                 children: [
-                  LikeButton(
-                    countPostion: CountPostion.bottom,
-                    circleColor:
-                        CircleColor(start: Colors.red, end: Colors.red),
-                    bubblesColor: BubblesColor(
-                      dotPrimaryColor: Colors.red,
-                      dotSecondaryColor: Colors.red,
-                    ),
-                    likeBuilder: (bool isLiked) {
-                      return Icon(
-                        Icons.favorite_rounded,
-                        color: isLiked ? Colors.pink : Colors.grey,
-                        size: 30,
-                      );
-                    },
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Consumer<LikeModel>(
+                        builder: (context, likeModel, _) {
+                          return LikeButton(
+                            size: 30,
+                            countPostion: CountPostion.right,
+                            bubblesColor: BubblesColor(
+                              dotPrimaryColor: likeModel.isLiked
+                                  ? Colors.redAccent
+                                  : Theme.of(context).brightness ==
+                                          Brightness.light
+                                      ? const Color.fromARGB(0, 255, 255, 255)
+                                      : Colors.transparent,
+                              dotSecondaryColor: likeModel.isLiked
+                                  ? Colors.redAccent
+                                  : Theme.of(context).brightness ==
+                                          Brightness.light
+                                      ? const Color.fromARGB(0, 255, 255, 255)
+                                      : Colors.transparent,
+                            ),
+                            circleColor: CircleColor(
+                              start: likeModel.isLiked
+                                  ? Colors.redAccent
+                                  : const Color.fromARGB(0, 255, 255, 255),
+                              end: likeModel.isLiked
+                                  ? Colors.redAccent
+                                  : const Color.fromARGB(0, 255, 255, 255),
+                            ),
+                            likeBuilder: (bool isLiked) {
+                              return Icon(
+                                Icons.favorite_rounded,
+                                color: likeModel.isLiked
+                                    ? Colors.redAccent
+                                    : Colors.grey,
+                                size: 30,
+                              );
+                            },
+                            onTap: (isLiked) async {
+                              Provider.of<LikeModel>(context, listen: false)
+                                  .incrementLike();
+                              return !isLiked;
+                            },
+                          );
+                        },
+                      ),
+                      SizedBox(height: 1.5),
+                      // Indikator Jumlah Like
+                      Consumer<LikeModel>(
+                        builder: (context, likeModel, _) {
+                          return Text(
+                            '${likeModel.likeCount}',
+                            style: GoogleFonts.arima(fontSize: 12),
+                          );
+                        },
+                      ),
+                    ],
                   ),
                   SizedBox(
-                    width: 3,
+                    width: 10,
                   ),
                   Switch(
+                    thumbIcon: WidgetStatePropertyAll(Icon(
+                        Theme.of(context).brightness == Brightness.light
+                            ? Icons.brightness_7
+                            : Icons.brightness_4)),
                     value: AdaptiveTheme.of(context).mode.isDark,
                     onChanged: (value) {
                       if (value) {
@@ -160,7 +175,8 @@ class _AboutPageState extends State<AboutPage> {
                           ),
                         ],
                         image: DecorationImage(
-                          image: AssetImage('assets/background_drawer.jpg'),
+                          image:
+                              AssetImage('assets/drawer/background_drawer.jpg'),
                           fit: BoxFit.cover,
                           colorFilter: ColorFilter.mode(
                               Color.fromARGB(153, 0, 0, 0), BlendMode.darken),
@@ -178,7 +194,7 @@ class _AboutPageState extends State<AboutPage> {
                                     width: 0.5),
                                 image: DecorationImage(
                                   image: AssetImage(
-                                    'assets/profil.png',
+                                    'assets/drawer/profil.png',
                                   ),
                                   fit: BoxFit.cover,
                                 ),
@@ -211,6 +227,10 @@ class _AboutPageState extends State<AboutPage> {
                                     animatedTexts: [
                                       TypewriterAnimatedText(
                                         'Frontend Developer',
+                                        speed: Duration(milliseconds: 150),
+                                      ),
+                                      TypewriterAnimatedText(
+                                        'Mobile Developer',
                                         speed: Duration(milliseconds: 150),
                                       ),
                                       TypewriterAnimatedText(
@@ -494,7 +514,7 @@ class _AboutPageState extends State<AboutPage> {
                           ),
                         ],
                         image: DecorationImage(
-                          image: AssetImage('assets/profil.png'),
+                          image: AssetImage('assets/drawer/profil.png'),
                         ),
                       ),
                     ),
@@ -511,11 +531,11 @@ class _AboutPageState extends State<AboutPage> {
                               child: AnimatedTextKit(
                                 isRepeatingAnimation: true,
                                 repeatForever: true,
-                                pause: Duration(seconds: 5),
+                                pause: Duration(seconds: 3),
                                 animatedTexts: [
                                   ColorizeAnimatedText(
                                     'Rifal Anandika Ananta',
-                                    speed: Duration(milliseconds: 300),
+                                    speed: Duration(milliseconds: 450),
                                     textStyle:
                                         GoogleFonts.waterBrush(fontSize: 30),
                                     colors: [
@@ -660,8 +680,8 @@ class _AboutPageState extends State<AboutPage> {
               style: GoogleFonts.arima(
                 fontSize: 12,
                 color: (Theme.of(context).brightness == Brightness.light
-                    ? Colors.black54
-                    : Colors.white60),
+                    ? Colors.black
+                    : Colors.white),
               ),
             ),
           ),
